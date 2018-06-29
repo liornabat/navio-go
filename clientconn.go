@@ -6,8 +6,10 @@ import (
 	"google.golang.org/grpc/credentials"
 	"fmt"
 	ot "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
-
+	pb "github.com/liornabat/navio-go/protobuf"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/metadata"
+	"strconv"
 )
 
 type clientConn struct {
@@ -15,11 +17,22 @@ type clientConn struct {
 	cancel  context.CancelFunc
 	target  string
 	opts    options
-	gClient WarpClient
+	gClient pb.WarpClient
 	gConn   *grpc.ClientConn
 	dopts   []grpc.DialOption
 
 }
+
+func createMetaDataContext(headers map[string]string) context.Context {
+	h := metadata.New(headers)
+	return metadata.NewOutgoingContext(context.Background(), h)
+}
+
+func createMetaDataContextWithContext(ctx context.Context, headers map[string]string) context.Context {
+	h := metadata.New(headers)
+	return metadata.NewOutgoingContext(ctx, h)
+}
+
 
 func (cc *clientConn) optionsApply () error {
 	if cc.opts.name=="" {
@@ -55,7 +68,7 @@ func (cc *clientConn) getClientConn() (err error) {
 	if cc.gConn, err = grpc.Dial(cc.target,cc.dopts...);err!=nil {
 		return
 	}
-	cc.gClient = NewWarpClient(cc.gConn)
+	cc.gClient = pb.NewWarpClient(cc.gConn)
 	return
 }
 
@@ -64,8 +77,21 @@ func (cc *clientConn) close () error {
 	return cc.gConn.Close()
 }
 
-
-
+func (cc *clientConn) sendMessage (msg *Message,timeout int) (err error) {
+	md:=make(map[string]string)
+	md["client_tag"] =cc.opts.name
+	if timeout>0 {
+		md["timeout"]=strconv.Itoa(timeout)
+	}
+	ctx := createMetaDataContext(md)
+	pbMessage:=&pb.Message{
+		Channel:msg.Topic,
+		Metadata:msg.Meta,
+		Body:msg.Body,
+	}
+	_,err = cc.gClient.SendMessage(ctx,pbMessage)
+	return
+}
 
 
 

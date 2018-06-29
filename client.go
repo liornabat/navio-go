@@ -45,3 +45,11 @@ func (c *Client) DialWithContext (ctx context.Context) (err error) {
 func (c *Client) Close () error {
 	return c.cc.close()
 }
+
+func (c *Client) NewMessage (topic,meta string, body []byte) *Message{
+	return newMessage(c.cc,topic,meta,body)
+}
+func (c *Client) M () *Message{
+	return m(c.cc)
+}
+
