@@ -53,3 +53,28 @@ func (c *Client) M () *Message{
 	return m(c.cc)
 }
 
+func (c *Client) NewRequest (id, topic,meta string, body []byte,timeout int) *SendRequest{
+	return newRequest(c.cc,id,topic,meta,body,timeout)
+}
+func (c *Client) R () *SendRequest{
+	return r(c.cc)
+}
+
+func (c *Client) NewMessageStream(ch chan *Message) error {
+	return c.cc.sendMessageStream(ch)
+}
+
+func (c *Client) SubscribeToTopic(topic string, ch chan*Message) error {
+	return c.cc.subscribeToChannel(topic,"",ch)
+}
+
+func (c *Client) SubscribeToTopicWithQueueGroup(topic,group string, ch chan*Message) error {
+	return c.cc.subscribeToChannel(topic,group,ch)
+}
+func (c *Client) SubscribeToRequest(topic string, ch chan *GetRequest) error {
+	return c.cc.subscribeToRequests(topic,"",ch)
+}
+
+func (c *Client) SubscribeToRequestWithQueueGroup(topic,group string, ch chan*GetRequest) error {
+	return c.cc.subscribeToRequests(topic,group,ch)
+}
