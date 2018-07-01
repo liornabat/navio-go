@@ -2,27 +2,27 @@ package navio
 
 type Message struct {
 	Topic string
-	Meta string
-	Body []byte
-	cc *clientConn
+	Meta  string
+	Body  []byte
+	cc    *clientConn
 }
 
-func newMessage (cc *clientConn, topic,meta string, body []byte) *Message {
+func newMessage(cc *clientConn, topic, meta string, body []byte) *Message {
 	return &Message{
-		Topic:topic,
-		Meta:meta,
-		Body:body,
-		cc:cc,
+		Topic: topic,
+		Meta:  meta,
+		Body:  body,
+		cc:    cc,
 	}
 }
 
 func m(cc *clientConn) *Message {
 	return &Message{
-		cc:cc,
+		cc: cc,
 	}
 }
 
-func (m *Message) SetTopic( value string) *Message {
+func (m *Message) SetTopic(value string) *Message {
 	m.Topic = value
 	return m
 }
@@ -38,9 +38,9 @@ func (m *Message) SetBody(value []byte) *Message {
 }
 
 func (m *Message) Send() error {
-	return m.cc.sendMessage(m,0)
+	return m.cc.sendMessage(m, 0)
 }
 
 func (m *Message) SendWithTimeout(t int) error {
-	return m.cc.sendMessage(m,t)
+	return m.cc.sendMessage(m, t)
 }

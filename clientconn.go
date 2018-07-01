@@ -131,7 +131,7 @@ func (cc *clientConn) sendMessageStream(ch chan *Message) error {
 	}
 	go func() {
 		for {
-			msg,closed :=<-ch
+			msg, closed := <-ch
 			if closed {
 				return
 			}
@@ -151,8 +151,8 @@ func (cc *clientConn) sendMessageStream(ch chan *Message) error {
 func (cc *clientConn) sendRequest(ctx context.Context, req *SendRequest) (*GetResponse, error) {
 	md := make(map[string]string)
 	md["client_tag"] = cc.opts.name
-	ctx = createMetaDataContextWithContext(ctx,md)
-	pbRequest:=&pb.Request{
+	ctx = createMetaDataContextWithContext(ctx, md)
+	pbRequest := &pb.Request{
 		ID:       req.ID,
 		Channel:  req.Topic,
 		Metadata: req.Meta,
@@ -161,29 +161,29 @@ func (cc *clientConn) sendRequest(ctx context.Context, req *SendRequest) (*GetRe
 		CacheKey: req.CacheKey,
 		CacheTTL: int32(req.CacheTTL),
 	}
-	pbResponse,err:=cc.gClient.SendRequest(ctx,pbRequest)
+	pbResponse, err := cc.gClient.SendRequest(ctx, pbRequest)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
-	response:=&GetResponse{
-		RequestID:pbResponse.RequestID,
-		Meta:pbResponse.Metadata,
-		Body:pbResponse.Body,
-		CacheHit:pbResponse.ChachHit,
+	response := &GetResponse{
+		RequestID: pbResponse.RequestID,
+		Meta:      pbResponse.Metadata,
+		Body:      pbResponse.Body,
+		CacheHit:  pbResponse.CacheHit,
 	}
-	return response,nil
+	return response, nil
 }
 func (cc *clientConn) sendResponse(ctx context.Context, req *GetRequest) error {
 	md := make(map[string]string)
 	md["client_tag"] = cc.opts.name
-	ctx = createMetaDataContextWithContext(ctx,md)
-	pbResponse:=&pb.Response{
-		RequestID:req.ID,
-		Body:req.Body,
-		Metadata:req.Meta,
+	ctx = createMetaDataContextWithContext(ctx, md)
+	pbResponse := &pb.Response{
+		RequestID:    req.ID,
+		Body:         req.Body,
+		Metadata:     req.Meta,
 		ReplyChannel: req.replyTopic,
 	}
-	_,err:=cc.gClient.SendResponse(ctx,pbResponse)
+	_, err := cc.gClient.SendResponse(ctx, pbResponse)
 	if err != nil {
 		return err
 	}
@@ -193,8 +193,8 @@ func (cc *clientConn) sendResponse(ctx context.Context, req *GetRequest) error {
 func (cc *clientConn) subscribeToRequests(topic, group string, ch chan *GetRequest) error {
 	md := make(map[string]string)
 	md["client_tag"] = cc.opts.name
-	md["channel"]=topic
-	md["group"]=group
+	md["channel"] = topic
+	md["group"] = group
 	ctx := createMetaDataContext(md)
 	sub, err := cc.gClient.RequestResponseStream(ctx)
 	if err != nil {
@@ -207,11 +207,13 @@ func (cc *clientConn) subscribeToRequests(topic, group string, ch chan *GetReque
 				close(ch)
 				return
 			}
-			if req.ReplyChannel=="" {continue}
+			if req.ReplyChannel == "" {
+				continue
+			}
 			ch <- &GetRequest{
-				ID: req.ID,
-				Meta:  req.Metadata,
-				Body:  req.Body,
+				ID:         req.ID,
+				Meta:       req.Metadata,
+				Body:       req.Body,
 				replyTopic: req.ReplyChannel,
 			}
 		}
