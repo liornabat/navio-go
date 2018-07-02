@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
 	"github.com/google/uuid"
+
+	"errors"
 )
 
 type Server struct {
@@ -73,8 +75,8 @@ func (s *Server) Run() {
 func (s *Server) sendMessage (msg *pb.Message)  {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	for _, topicMap := range s.messagesMap[msg.Channel] {
-		topicMap<-msg
+	for _, topicCh := range s.messagesMap[msg.Channel] {
+		topicCh<-msg
 	}
 }
 
@@ -125,11 +127,26 @@ func (s *Server) SendRequest(ctx context.Context, req *pb.Request) (*pb.Response
 	s.responseMap[replyChId]=make(chan *pb.Response,1)
 	s.mu.Unlock()
 	req.ReplyChannel=replyChId
-	
-	return &pb.Response{}, nil
+
+	c,ok:=s.requestsMap[req.Channel]
+	if !ok{
+		return nil,errors.New("timeout")
+	}
+	for _, topicCh := range c {
+		topicCh<-req
+	}
+	res:=<-s.responseMap[replyChId]
+	return res, nil
 }
 
 func (s *Server) SendResponse(ctx context.Context, res *pb.Response) (empty *pb.Empty, err error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	c,ok:=s.responseMap[res.ReplyChannel]
+	if !ok {
+		return nil,errors.New("reply channel doesn't exist")
+	}
+	c<-res
 	return &pb.Empty{}, nil
 }
 
