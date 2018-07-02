@@ -133,6 +133,7 @@ func (cc *clientConn) sendMessageStream(ch chan *Message) error {
 		for {
 			msg, closed := <-ch
 			if closed {
+				sender.CloseSend()
 				return
 			}
 			pbMessage := &pb.Message{
@@ -169,7 +170,7 @@ func (cc *clientConn) sendRequest(ctx context.Context, req *SendRequest) (*GetRe
 		RequestID: pbResponse.RequestID,
 		Meta:      pbResponse.Metadata,
 		Body:      pbResponse.Body,
-		CacheHit:  pbResponse.CacheHit,
+		CacheHit:  pbResponse.ChachHit,
 	}
 	return response, nil
 }
